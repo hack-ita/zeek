@@ -270,6 +270,50 @@ involved a query and response for IPv4-related information, i.e., an A record
 for ``zeek.org``. It is interesting to note that the DNS resolver on the
 ``1.1.1.1`` system requested IPv6 information first, and then IPv4.
 
+Investigating Potential DNS Tunneling
+=======================================
+
+DNS tunneling can use ordinary DNS queries and responses to carry
+command-and-control traffic or transfer data. An unusual query is not, by
+itself, proof of tunneling. The following examples help identify records that
+may deserve closer investigation in a JSON-formatted :file:`dns.log`.
+
+List queries with unusually long labels, showing the queried name and the
+length of its longest label:
+
+.. code-block:: console
+
+  jq -r 'select(.query != null) | [.query, (.query | split(".") | map(length) | max)] | @tsv' dns.log | sort -k2,2nr | head
+
+Review TXT queries and their answers. TXT records are legitimate and widely
+used, so their presence should be treated as a lead rather than a verdict:
+
+.. code-block:: console
+
+  jq -r 'select(.qtype_name == "TXT") | [.ts, ."id.orig_h", .query, ((.answers // []) | join(","))] | @tsv' dns.log
+
+Identify hosts generating the largest number of DNS log entries:
+
+.. code-block:: console
+
+  jq -r 'select(."id.orig_h" != null) | ."id.orig_h"' dns.log | sort | uniq -c | sort -nr | head
+
+Investigate the resulting hosts in context. Look for long or
+high-entropy-looking labels, many distinct subdomains queried in a short
+period, unusual record types, and activity that is unexpected for the host.
+Compare the results against a known-good baseline and account for legitimate
+services such as CDNs, telemetry, software updates, and email authentication.
+
+For deeper investigation, pivot from DNS records to related :file:`conn.log`
+entries using the shared `uid`. Correlate timestamps, source hosts,
+destinations, query types, and response data. No single threshold or query
+pattern reliably distinguishes DNS tunneling from normal DNS use; conclusions
+should be based on multiple signals and the surrounding network context.
+
+For a practical overview of DNS tunneling, data exfiltration, and network
+analysis, see the
+`HackITA DNS tunneling guide <https://en.hackita.it/articoli/dns-tunneling/>`_.
+
 Conclusion
 ==========
 
