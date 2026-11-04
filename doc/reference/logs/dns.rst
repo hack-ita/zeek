@@ -271,7 +271,7 @@ for ``zeek.org``. It is interesting to note that the DNS resolver on the
 ``1.1.1.1`` system requested IPv6 information first, and then IPv4.
 
 Investigating Potential DNS Tunneling
-=======================================
+=====================================
 
 DNS tunneling can use ordinary DNS queries and responses to carry
 command-and-control traffic or transfer data. An unusual query is not, by
@@ -305,7 +305,7 @@ Compare the results against a known-good baseline and account for legitimate
 services such as CDNs, telemetry, software updates, and email authentication.
 
 For deeper investigation, pivot from DNS records to related :file:`conn.log`
-entries using the shared `uid`. Correlate timestamps, source hosts,
+entries using the shared ``uid``. Correlate timestamps, source hosts,
 destinations, query types, and response data. No single threshold or query
 pattern reliably distinguishes DNS tunneling from normal DNS use; conclusions
 should be based on multiple signals and the surrounding network context.
